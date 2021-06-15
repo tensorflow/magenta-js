@@ -565,7 +565,8 @@ class Coconet {
             predictions.shape[0], predictions.shape[1], predictions.shape[3],
             predictions.shape[2]
           ])
-          .transpose([0, 1, 3, 2]);
+          .transpose([0, 1, 3, 2])
+          .cast("float32");
     });
   }
 }
