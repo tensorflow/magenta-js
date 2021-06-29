@@ -983,3 +983,66 @@ test('Merge Consecutive Notes', (t: test.Test) => {
       NoteSequence.toObject(expected));
   t.end();
 });
+
+test('applySustain error case: quantized sequence', (t: test.Test) => {
+  const ns1 = createTestNS();
+
+  addQuantizedTrackToSequence(ns1, 0, [[60, 100, 0, 4], [72, 100, 2, 6]]);
+  ns1.quantizationInfo = NoteSequence.QuantizationInfo.create(
+      {stepsPerQuarter: STEPS_PER_QUARTER});
+  t.throws(() => sequences.applySustainControlChanges(ns1), Error);
+  t.end();
+});
+
+test('applySustain to sequence without sustain', (t: test.Test) => {
+  const ns = createTestNS();
+
+  addTrackToSequence(ns, 0, [
+    [12, 100, 0.01, 10.0], [11, 55, 0.22, 0.50], [40, 45, 2.50, 3.50],
+    [55, 120, 4.0, 4.01], [52, 99, 4.75, 5.0]
+  ]);
+
+  const sustainedNS = sequences.applySustainControlChanges(ns);
+
+  t.deepEqual(
+    NoteSequence.toObject(ns),
+    NoteSequence.toObject(sustainedNS));
+  t.end();
+});
+
+test('applySustain to sequence with sustain', (t: test.Test) => {
+  const ns = createTestNS();
+
+  addTrackToSequence(ns, 0, [
+    [60, 100, 1.0, 2.0],
+    [61, 100, 2.0, 3.0],
+    [62, 100, 3.0, 4.0],
+    [64, 100, 5.0, 6.0],
+    [65, 100, 6.0, 7.0]
+  ]);
+  addControlChangesToSequence(ns, 0, [
+     [0.0, 64, 127],
+     [5.0, 64, 0]
+  ]);
+
+  const expectedNS = createTestNS();
+
+  addTrackToSequence(expectedNS, 0, [
+    [60, 100, 1.0, 5.0],
+    [61, 100, 2.0, 5.0],
+    [62, 100, 3.0, 5.0],
+    [64, 100, 5.0, 6.0],
+    [65, 100, 6.0, 7.0]
+  ]);
+  addControlChangesToSequence(expectedNS, 0, [
+    [0.0, 64, 127],
+    [5.0, 64, 0]
+  ]);
+
+  const sustainedNS = sequences.applySustainControlChanges(ns);
+
+  t.deepEqual(
+    NoteSequence.toObject(sustainedNS),
+    NoteSequence.toObject(expectedNS));
+  t.end();
+});
